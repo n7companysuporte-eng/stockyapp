@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stocky • Controle de Estoque</title>
+
+<style>
+:root {
+  --roxo: #6c2bd9;
+  --roxo-claro: #f3edff;
+  --preto: #111;
+  --cinza: #666;
+  --branco: #fff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f6f9;
+  color: var(--preto);
+}
+
+/* LOGIN */
+#login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.login-card svg {
+  width: 56px;
+  margin-bottom: 10px;
+}
+
+header {
+  background: var(--roxo);
+  color: white;
+  padding: 16px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+}
+
+.header-text strong {
+  font-size: 18px;
+  display: block;
+}
+
+.header-text small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+main {
+  padding: 16px;
+  padding-bottom: 90px;
+}
+
+section {
+  display: none;
+}
+
+section.active {
+  display: block;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+input, button, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+button {
+  background: var(--roxo);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.list {
+  font-size: 14px;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.item small {
+  color: var(--cinza);
+}
+
+.remove {
+  color: red;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+
+nav button {
+  flex: 1;
+  border-radius: 0;
+  background: none;
+  color: var(--cinza);
+}
+
+nav button.active {
+  color: var(--roxo);
+  font-weight: 700;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <svg viewBox="0 0 64 64">
+      <rect x="6" y="6" width="52" height="52" rx="14" fill="#6c2bd9"/>
+      <rect x="18" y="18" width="28" height="28" rx="6" fill="white"/>
+    </svg>
+    <strong style="font-size:20px">Stocky</strong>
+    <small style="display:block;margin-bottom:16px">Controle de estoque</small>
+
+    <input id="user" placeholder="Usuário">
+    <input id="pass" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <button onclick="criarConta()" style="background:#eee;color:#111">Criar conta</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+<header>
+  <div class="header-content">
+    <svg class="logo" viewBox="0 0 64 64">
+      <rect x="6" y="6" width="52" height="52" rx="14" fill="white"/>
+      <rect x="18" y="18" width="28" height="28" rx="6" fill="#6c2bd9"/>
+      <path d="M18 28h28M18 36h28" stroke="white" stroke-width="2"/>
+    </svg>
+    <div class="header-text">
+      <strong>Stocky</strong>
+      <small>Controle simples de estoque</small>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section id="entrada" class="active">
+  <div class="card">
+    <h3>➕ Entrada de Produto</h3>
+    <input id="produtoEntrada" placeholder="Nome do produto">
+    <input id="categoriaEntrada" placeholder="Categoria">
+    <input id="quantidadeEntrada" type="number" placeholder="Quantidade">
+    <button onclick="adicionarLancamento('entrada')">Salvar entrada</button>
+  </div>
+</section>
+
+<section id="saida">
+  <div class="card">
+    <h3>➖ Saída de Produto</h3>
+    <input id="produtoSaida" placeholder="Nome do produto">
+    <input id="categoriaSaida" placeholder="Categoria">
+    <input id="quantidadeSaida" type="number" placeholder="Quantidade">
+    <button onclick="adicionarLancamento('saida')">Salvar saída</button>
+  </div>
+</section>
+
+<section id="historico">
+  <div class="card">
+    <h3>🕒 Histórico</h3>
+    <div id="historicoLista" class="list"></div>
+  </div>
+</section>
+
+<section id="estoque">
+  <div class="card">
+    <h3>📦 Estoque Atual</h3>
+    <div id="estoqueLista" class="list"></div>
+  </div>
+</section>
+
+<section id="analise">
+  <div class="card">
+    <h3>📊 Análise por período</h3>
+    <input type="date" id="dataInicio">
+    <input type="date" id="dataFim">
+    <input id="categoriaFiltro" placeholder="Categoria (opcional)">
+    <button onclick="gerarRelatorio()">Gerar relatório</button>
+  </div>
+
+  <div class="card">
+    <h3>📄 Relatório</h3>
+    <textarea id="relatorio" rows="12"></textarea>
+    <button onclick="enviarWhats()">Enviar para WhatsApp</button>
+    <button onclick="exportarPDF()">Exportar PDF</button>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="active" onclick="trocarAba('entrada', this)">Entrada</button>
+  <button onclick="trocarAba('saida', this)">Saída</button>
+  <button onclick="trocarAba('historico', this)">Histórico</button>
+  <button onclick="trocarAba('estoque', this)">Estoque</button>
+  <button onclick="trocarAba('analise', this)">Análise</button>
+</nav>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+let usuarioLogado = localStorage.getItem("usuarioLogado");
+let users = JSON.parse(localStorage.getItem("users")) || {};
+let lancamentos = [];
+
+function login() {
+  if (users[user.value] === pass.value) {
+    usuarioLogado = user.value;
+    localStorage.setItem("usuarioLogado", usuarioLogado);
+    iniciar();
+  } else alert("Usuário ou senha inválidos");
+}
+
+function criarConta() {
+  if (!user.value || !pass.value) return alert("Preencha tudo");
+  if (users[user.value]) return alert("Usuário já existe");
+  users[user.value] = pass.value;
+  localStorage.setItem("users", JSON.stringify(users));
+  alert("Conta criada com sucesso");
+}
+
+function iniciar() {
+  login.style.display = "none";
+  app.style.display = "block";
+  lancamentos = JSON.parse(localStorage.getItem("lancamentos_" + usuarioLogado)) || [];
+  renderizar();
+}
+
+function salvar() {
+  localStorage.setItem("lancamentos_" + usuarioLogado, JSON.stringify(lancamentos));
+}
+
+function trocarAba(id, btn) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderizar();
+}
+
+function adicionarLancamento(tipo) {
+  const produto = document.getElementById("produto" + capitalize(tipo)).value;
+  const categoria = document.getElementById("categoria" + capitalize(tipo)).value;
+  const quantidade = Number(document.getElementById("quantidade" + capitalize(tipo)).value);
+  if (!produto || !categoria || !quantidade) return alert("Preencha tudo");
+  lancamentos.push({ id: Date.now(), produto, categoria, quantidade, tipo, data: new Date().toLocaleDateString("pt-BR") });
+  salvar(); renderizar();
+}
+
+function remover(id) {
+  lancamentos = lancamentos.filter(l => l.id !== id);
+  salvar(); renderizar();
+}
+
+function renderizar() {
+  historicoLista.innerHTML = "";
+  lancamentos.slice().reverse().forEach(l => {
+    historicoLista.innerHTML += `
+      <div class="item">
+        <div><strong>${l.produto}</strong><br><small>${l.categoria} • ${l.tipo} • ${l.data}</small></div>
+        <div>${l.quantidade}<div class="remove" onclick="remover(${l.id})">remover</div></div>
+      </div>`;
+  });
+
+  const estoque = {};
+  lancamentos.forEach(l => {
+    if (!estoque[l.produto]) estoque[l.produto] = { categoria: l.categoria, total: 0 };
+    estoque[l.produto].total += l.tipo === "entrada" ? l.quantidade : -l.quantidade;
+  });
+
+  estoqueLista.innerHTML = "";
+  Object.keys(estoque).forEach(p => {
+    estoqueLista.innerHTML += `
+      <div class="item">
+        <div><strong>${p}</strong><br><small>${estoque[p].categoria}</small></div>
+        <strong>${estoque[p].total}</strong>
+      </div>`;
+  });
+}
+
+function gerarRelatorio() {
+  let texto = `📦 RELATÓRIO STOCKY\nUsuário: ${usuarioLogado}\n\n`;
+  lancamentos.forEach(l => texto += `${l.data} • ${l.produto} • ${l.tipo} • ${l.quantidade}\n`);
+  relatorio.value = texto;
+}
+
+function enviarWhats() {
+  window.open(`https://wa.me/?text=${encodeURIComponent(relatorio.value)}`, "_blank");
+}
+
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  const dataGeracao = new Date().toLocaleString("pt-BR");
+
+  // Cabeçalho
+  pdf.setFontSize(16);
+  pdf.text("Stocky", 14, 20);
+  pdf.setFontSize(10);
+  pdf.text("Controle Profissional de Estoque", 14, 26);
+  pdf.text(`Usuário: ${usuarioLogado}`, 14, 32);
+  pdf.text(`Gerado em: ${dataGeracao}`, 14, 38);
+  pdf.line(14, 42, 196, 42);
+
+  // Conteúdo
+  pdf.setFontSize(11);
+  const texto = pdf.splitTextToSize(relatorio.value, 180);
+  pdf.text(texto, 14, 50);
+
+  // Rodapé
+  const totalPaginas = pdf.getNumberOfPages();
+  for (let i = 1; i <= totalPaginas; i++) {
+    pdf.setPage(i);
+    pdf.setFontSize(9);
+    pdf.text(`Stocky • Relatório de Estoque • Página ${i} de ${totalPaginas}`, 14, 290);
+  }
+
+  pdf.save("Relatorio_Stocky.pdf");
+}
+
+function capitalize(t) {
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+if (usuarioLogado) iniciar();
+</script>
+
+</body>
+</html>
